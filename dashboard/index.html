@@ -591,11 +591,11 @@
 
     <script>
         const API_URLS = {
-            patients: 'http://localhost:8082/patients/all',
-            appointments: 'http://localhost:8081/appointments',
-            appointmentsAll: 'http://localhost:8081/appointments/all',
-            bills: 'http://localhost:3003/api/bills',
-            notifications: 'http://localhost:3004/api/notifications'
+            patients: 'http://localhost:8080/api/patients',
+            appointments: 'http://localhost:8080/api/appointments',
+            appointmentsAll: 'http://localhost:8080/api/appointments/all',
+            bills: 'http://localhost:8080/api/bills',
+            notifications: 'http://localhost:8080/api/notifications'
         };
 
         // Load all data on page load
@@ -615,7 +615,11 @@
         async function loadPatients() {
             try {
                 const response = await fetch(API_URLS.patients);
-                const patients = await response.json();
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                const patients = data.content || data; // Support both paginated and array responses
                 
                 document.getElementById('patientsCount').textContent = patients.length;
                 
@@ -676,6 +680,9 @@
         async function loadAppointments() {
             try {
                 const response = await fetch(API_URLS.appointmentsAll);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 const appointments = await response.json();
                 
                 document.getElementById('appointmentsCount').textContent = appointments.length;
@@ -736,6 +743,9 @@
         async function loadBills() {
             try {
                 const response = await fetch(API_URLS.bills);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 const bills = await response.json();
                 
                 document.getElementById('billsCount').textContent = bills.length;
@@ -792,6 +802,9 @@
         async function loadNotifications() {
             try {
                 const response = await fetch(API_URLS.notifications);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 const notifications = await response.json();
                 
                 document.getElementById('notificationsCount').textContent = notifications.length;

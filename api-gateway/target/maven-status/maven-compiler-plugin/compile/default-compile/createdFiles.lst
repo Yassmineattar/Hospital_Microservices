@@ -1,0 +1,3 @@
+com\hospital\gateway\config\CorsConfig.class
+com\hospital\gateway\controller\FallbackController.class
+com\hospital\gateway\ApiGatewayApplication.class

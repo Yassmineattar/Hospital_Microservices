@@ -1,0 +1,92 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  
+  cloud:
+    gateway:
+      # Configuration globale CORS
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: 
+              - "http://localhost:5000"
+              - "http://127.0.0.1:5000"
+              - "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+      
+      # Configuration des routes
+      routes:
+        # Route vers Patient Service
+        - id: patient-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/patients/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: patientServiceCircuitBreaker
+                fallbackUri: forward:/fallback/patients
+        
+        # Route vers Appointment Service
+        - id: appointment-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/appointments/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: appointmentServiceCircuitBreaker
+                fallbackUri: forward:/fallback/appointments
+        
+        # Route vers Billing Service
+        - id: billing-service
+          uri: http://localhost:3003
+          predicates:
+            - Path=/api/bills/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: billingServiceCircuitBreaker
+                fallbackUri: forward:/fallback/bills
+        
+        # Route vers Notification Service
+        - id: notification-service
+          uri: http://localhost:3004
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: notificationServiceCircuitBreaker
+                fallbackUri: forward:/fallback/notifications
+
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+
+# Logging
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty: INFO

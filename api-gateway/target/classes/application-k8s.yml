@@ -1,0 +1,81 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+      
+      routes:
+        # Route vers Patient Service (Kubernetes DNS)
+        - id: patient-service
+          uri: ${PATIENT_SERVICE_URL:http://patient-service:8082}
+          predicates:
+            - Path=/api/patients/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: patientServiceCircuitBreaker
+                fallbackUri: forward:/fallback/patients
+        
+        # Route vers Appointment Service (Kubernetes DNS)
+        - id: appointment-service
+          uri: ${APPOINTMENT_SERVICE_URL:http://appointment-service:8081}
+          predicates:
+            - Path=/api/appointments/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: appointmentServiceCircuitBreaker
+                fallbackUri: forward:/fallback/appointments
+        
+        # Route vers Billing Service (Kubernetes DNS)
+        - id: billing-service
+          uri: ${BILLING_SERVICE_URL:http://billing-service:3003}
+          predicates:
+            - Path=/api/bills/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: billingServiceCircuitBreaker
+                fallbackUri: forward:/fallback/bills
+        
+        # Route vers Notification Service (Kubernetes DNS)
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:3004}
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: notificationServiceCircuitBreaker
+                fallbackUri: forward:/fallback/notifications
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    reactor.netty: INFO
