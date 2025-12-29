@@ -173,7 +173,7 @@ jobs:
           if (-not (Test-Path $yqPath)) {
             Invoke-WebRequest -Uri $yqUrl -OutFile $yqPath
           }
-          $expression = ".spec.template.spec.containers[0].image = \"$env:IMAGE_URI\""
+          $expression = ".spec.template.spec.containers[0].image = `"$env:IMAGE_URI`""
           & $yqPath -i $expression "${{ env.K8S_MANIFEST_PATH }}deployment.yaml"
 
       - name: Deploy manifests
