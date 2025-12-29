@@ -163,13 +163,17 @@ jobs:
           "IMAGE_PATH=$imagePath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Set image tag for manifests
-        # Update deployment manifests with the newly pushed image using yq action
-        uses: mikefarah/yq@v4
+        # Update deployment manifests with the newly pushed image
+        shell: pwsh
         env:
           IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_PATH }}:${{ github.sha }}
-        with:
-          cmd: |
-            yq -i '.spec.template.spec.containers[0].image = env(IMAGE_URI)' ${{ env.K8S_MANIFEST_PATH }}deployment.yaml
+        run: |
+          $yqUrl = "https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_windows_amd64.exe"
+          $yqPath = Join-Path $env:RUNNER_TEMP "yq.exe"
+          if (-not (Test-Path $yqPath)) {
+            Invoke-WebRequest -Uri $yqUrl -OutFile $yqPath
+          }
+          & $yqPath -i ".spec.template.spec.containers[0].image = '$env:IMAGE_URI'" "${{ env.K8S_MANIFEST_PATH }}deployment.yaml"
 
       - name: Deploy manifests
         run: |
