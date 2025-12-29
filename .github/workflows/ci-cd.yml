@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: ["main"]
 
+permissions:
+  contents: read
+  packages: write
+
 # Global environment values keep sensitive data out of the file body
 env:
   REGISTRY: ghcr.io
@@ -107,9 +111,9 @@ jobs:
       - name: Log in to container registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push image
         uses: docker/build-push-action@v6
