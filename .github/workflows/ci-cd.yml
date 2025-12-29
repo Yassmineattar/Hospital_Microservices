@@ -148,15 +148,19 @@ jobs:
 
       - name: Configure kubeconfig
         # Assume the kubeconfig file is base64 encoded in the secret
-        shell: bash
+        shell: pwsh
         run: |
-          mkdir -p "$HOME/.kube"
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > "$HOME/.kube/config"
+          $kubeDir = Join-Path $env:USERPROFILE ".kube"
+          New-Item -ItemType Directory -Path $kubeDir -Force | Out-Null
+          $configPath = Join-Path $kubeDir "config"
+          $bytes = [System.Convert]::FromBase64String("${{ secrets.KUBE_CONFIG_DATA }}")
+          [System.IO.File]::WriteAllBytes($configPath, $bytes)
 
       - name: Compute lowercase image path
+        shell: pwsh
         run: |
-          IMAGE_PATH=$(echo "${GITHUB_REPOSITORY_OWNER}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
-          echo "IMAGE_PATH=$IMAGE_PATH" >> $GITHUB_ENV
+          $imagePath = ("$env:GITHUB_REPOSITORY_OWNER/${{ env.IMAGE_NAME }}").ToLower()
+          "IMAGE_PATH=$imagePath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Set image tag for manifests
         # Update deployment manifests with the newly pushed image using yq action
